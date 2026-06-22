@@ -38,13 +38,14 @@ class Job(Base):
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, server_default=func.now(), nullable=False)
+    last_crawled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     company: Mapped["Company"] = relationship(back_populates="jobs") # type: ignore
     location: Mapped[Optional["Location"]] = relationship(back_populates="jobs") # type: ignore
     skills: Mapped[list["JobSkill"]] = relationship(back_populates="job", cascade="all, delete-orphan")
     versions: Mapped[list["JobVersion"]] = relationship(back_populates="job", cascade="all, delete-orphan")
-
+    saved_by_users: Mapped[list["SavedJob"]] = relationship(back_populates="job")
 
 class JobVersion(Base):
     """Stores historical versions of a job listing for tracking changes over time."""

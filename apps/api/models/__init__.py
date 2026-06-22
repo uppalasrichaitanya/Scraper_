@@ -4,6 +4,7 @@ from .company import Company, Location
 from .job import Job, JobVersion
 from .skill import Skill, JobSkill
 from .crawler import CrawlRun, CrawlError
+from .saved import SavedJob, JobAlert
 
 __all__ = [
     "Base",
@@ -18,4 +19,6 @@ __all__ = [
     "JobSkill",
     "CrawlRun",
     "CrawlError",
+    "SavedJob",
+    "JobAlert",
 ]

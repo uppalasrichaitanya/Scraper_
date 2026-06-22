@@ -155,6 +155,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - /app/apps/web/node_modules
       - /app/apps/web/.next
     command: pnpm --filter web dev
     restart: unless-stopped

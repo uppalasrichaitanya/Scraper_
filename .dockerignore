@@ -1,9 +1,9 @@
-node_modules
-.next
+**/node_modules
+**/.next
 .git
-.venv
+**/.venv
 .env*
 !*.example
 .DS_Store
-dist
-build
+**/dist
+**/build

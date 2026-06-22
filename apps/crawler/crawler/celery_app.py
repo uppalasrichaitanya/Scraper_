@@ -21,6 +21,9 @@ app = Celery(
         "crawler.tasks.reindex",
         "crawler.tasks.crawl_tasks",
         "crawler.tasks.search_tasks",
+        "crawler.tasks.alert_tasks",
+        "crawler.tasks.health_tasks",
+        "crawler.tasks.lifecycle_tasks",
     ],
 )
 
@@ -64,23 +67,37 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour="*/6"),
         "args": [],
     },
-    # Clean up stale jobs every 6 hours (offset 30min from discover)
-    "cleanup-stale-jobs": {
-        "task": "jobs.cleanup_stale",
-        "schedule": crontab(minute=30, hour="*/6"),
-        "args": [],
-    },
     # Per-source health check every hour
-    "health-check-all-sources": {
-        "task": "crawl.health_check",
-        "schedule": crontab(minute=0),   # every hour
-        "args": [],
+    "adapter-health-check": {
+        "task": "health_tasks.check_adapter_health",
+        "schedule": 3600,
+        "options": {"queue": "crawl_default"},
     },
     # Nightly bulk reindex from DB to Elasticsearch
     "reindex-elasticsearch": {
         "task": "jobs.reindex_elasticsearch",
         "schedule": crontab(minute=0, hour=2),  # 2 AM
         "args": [],
+    },
+    # Stale job lifecycle
+    "stale-job-lifecycle": {
+        "task": "lifecycle_tasks.mark_stale_jobs",
+        "schedule": crontab(hour=20, minute=30),
+        "options": {"queue": "crawl_default"},
+    },
+    # Daily alert dispatch
+    "dispatch-daily-alerts": {
+        "task": "alert_tasks.dispatch_alerts",
+        "schedule": crontab(hour=2, minute=30),
+        "args": ("daily",),
+        "options": {"queue": "crawl_default"},
+    },
+    # Weekly alert dispatch
+    "dispatch-weekly-alerts": {
+        "task": "alert_tasks.dispatch_alerts",
+        "schedule": crontab(hour=2, minute=30, day_of_week=1),
+        "args": ("weekly",),
+        "options": {"queue": "crawl_default"},
     },
     # Crawl Naukri every 4 hours
     "naukri-crawl": {

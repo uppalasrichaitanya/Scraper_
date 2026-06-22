@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ jobs|length }} new job{{ 's' if jobs|length != 1 else '' }} — {{ alert_name }}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; }
+
+    /* Base */
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* Header */
+    .header {
+      background-color: #1d4ed8;
+      border-radius: 12px 12px 0 0;
+      padding: 24px 28px;
+      text-align: center;
+    }
+    .header h1 {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      color: #bfdbfe;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    /* Body */
+    .body {
+      background-color: #ffffff;
+      padding: 24px 28px;
+    }
+    .greeting {
+      font-size: 15px;
+      color: #374151;
+      margin: 0 0 20px;
+    }
+
+    /* Job card */
+    .job-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .job-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d4ed8;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .job-title:hover { text-decoration: underline; }
+    .job-meta {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 0 0 6px;
+    }
+    .job-salary {
+      font-size: 13px;
+      font-weight: 500;
+      color: #059669;
+      margin: 0;
+    }
+    .job-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #1d4ed8;
+      background-color: #dbeafe;
+      border-radius: 9999px;
+      padding: 2px 8px;
+      margin-top: 6px;
+    }
+
+    /* CTA */
+    .cta-section {
+      text-align: center;
+      padding: 20px 0 8px;
+    }
+    .cta-btn {
+      display: inline-block;
+      background-color: #1d4ed8;
+      color: #ffffff !important;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+    }
+
+    /* Footer */
+    .footer {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: 16px 28px;
+      text-align: center;
+    }
+    .footer p {
+      font-size: 12px;
+      color: #9ca3af;
+      margin: 0 0 4px;
+    }
+    .footer a {
+      color: #6b7280;
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 480px) {
+      .body, .footer { padding: 16px !important; }
+      .header { padding: 16px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Header -->
+    <div class="header">
+      <h1>{{ jobs|length }} New Job{{ 's' if jobs|length != 1 else '' }}</h1>
+      <p>For your alert: <strong>{{ alert_name }}</strong></p>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+      <p class="greeting">Hi {{ user_name }},</p>
+
+      {% for job in jobs %}
+      <div class="job-card">
+        <a class="job-title" href="{{ job.apply_url }}" target="_blank" rel="noopener">
+          {{ job.title }}
+        </a>
+        <p class="job-meta">
+          {{ job.company_name or 'Company not listed' }}
+          {% if job.location_city %}
+            &nbsp;·&nbsp;{{ job.location_city }}
+          {% endif %}
+          {% if job.is_remote %}
+            &nbsp;·&nbsp;Remote
+          {% endif %}
+        </p>
+        {% if job.salary_min %}
+        <p class="job-salary">
+          {% if job.salary_currency == 'INR' %}
+            ₹{{ (job.salary_min / 100000) | round(1) }}–{{ (job.salary_max / 100000) | round(1) }} LPA
+          {% else %}
+            {{ job.salary_currency }} {{ job.salary_min | int | format_number }}–{{ job.salary_max | int | format_number }}
+          {% endif %}
+        </p>
+        {% endif %}
+        {% if job.job_type %}
+        <span class="job-badge">{{ job.job_type | replace('_', ' ') | title }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <div class="cta-section">
+        <a
+          class="cta-btn"
+          href="{{ frontend_url }}/search"
+          target="_blank"
+          rel="noopener"
+        >
+          View all jobs &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>You're receiving this because you set up a job alert on our platform.</p>
+      <p>
+        <a href="{{ unsubscribe_url }}">Unsubscribe from this alert</a>
+        &nbsp;·&nbsp;
+        <a href="{{ frontend_url }}/alerts">Manage all alerts</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -24,7 +24,12 @@ RUN pnpm build
 # ── Development image (hot reload) ───────────────────────────────────────────
 FROM base AS development
 
-COPY package.json pnpm-lock.yaml .npmrc* ./
+COPY package.json pnpm-lock.yaml .npmrc* pnpm-workspace.yaml ./
+
+# Copy all workspace package.json files so pnpm can resolve the full graph
+COPY apps/web/package.json apps/web/package.json
+COPY packages/ packages/
+
 RUN pnpm install --frozen-lockfile
 
 COPY . .
@@ -33,7 +38,7 @@ EXPOSE 3000
 ENV PORT=3000
 ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD ["pnpm", "dev"]
+CMD ["pnpm", "--filter", "web", "dev"]
 
 # ── Production image ──────────────────────────────────────────────────────────
 FROM base AS production

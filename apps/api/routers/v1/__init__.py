@@ -20,9 +20,13 @@ router.include_router(jobs_router, prefix="/jobs", tags=["jobs"])
 from routers.v1.search import router as search_router
 router.include_router(search_router)
 
+from routers.v1.saved_jobs import router as saved_jobs_router
+from routers.v1.alerts import router as alerts_router
+router.include_router(saved_jobs_router)
+router.include_router(alerts_router)
+
 # from routers.v1.users import router as users_router
 # from routers.v1.applications import router as apps_router
-# from routers.v1.alerts import router as alerts_router
 # from routers.v1.skills import router as skills_router
 # from routers.v1.analytics import router as analytics_router
 # from routers.v1.oauth import router as oauth_router

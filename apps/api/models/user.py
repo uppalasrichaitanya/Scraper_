@@ -25,6 +25,9 @@ class User(Base):
 
     profile: Mapped["UserProfile"] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
     consents: Mapped[list["ConsentRecord"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    saved_jobs: Mapped[list["SavedJob"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    job_alerts: Mapped[list["JobAlert"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
 
 
 class UserProfile(Base):

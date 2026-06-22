@@ -55,6 +55,7 @@ async def _upsert(job: NormalizedJobSchema) -> None:
                 db.add(version)
                 _apply_updates(existing, job)
             existing.updated_at = datetime.datetime.utcnow()
+            existing.last_crawled_at = datetime.datetime.utcnow()
         else:
             new_job = Job(
                 canonical_id=job.canonical_id,
@@ -70,6 +71,7 @@ async def _upsert(job: NormalizedJobSchema) -> None:
                 is_remote=job.is_remote,
                 status="active",
                 posted_at=datetime.datetime.utcnow(),
+                last_crawled_at=datetime.datetime.utcnow(),
             )
             db.add(new_job)
             await db.flush()  # get new_job.id before inserting skills
