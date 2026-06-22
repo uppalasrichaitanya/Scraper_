@@ -1,0 +1,45 @@
+[
+  {"slug": "notice", "legal": "..."},
+  {
+    "id": 1234567,
+    "slug": "senior-python-developer-at-acme-corp",
+    "url": "https://remoteok.com/remote-jobs/1234567",
+    "position": "Senior Python Developer",
+    "company": "Acme Corp",
+    "company_logo": "https://remoteok.com/assets/img/jobs/acme.png",
+    "location": "Remote",
+    "tags": ["python", "django", "postgresql", "docker"],
+    "description": "<p>We are looking for a Senior Python Developer with 5+ years experience. Must know Django, PostgreSQL and Docker. Salary: $80k-$120k/year.</p>",
+    "salary_min": 80000,
+    "salary_max": 120000,
+    "date": "2024-01-15T10:00:00Z"
+  },
+  {
+    "id": 1234568,
+    "slug": "react-frontend-engineer-at-tech-startup",
+    "url": "https://remoteok.com/remote-jobs/1234568",
+    "position": "React Frontend Engineer",
+    "company": "Tech Startup",
+    "company_logo": "",
+    "location": "Remote",
+    "tags": ["react", "typescript", "javascript", "css"],
+    "description": "<p>Join our team as a React Frontend Engineer. 3-5 years experience required. TypeScript expertise a must.</p>",
+    "salary_min": 70000,
+    "salary_max": 100000,
+    "date": "2024-01-14T08:00:00Z"
+  },
+  {
+    "id": 1234569,
+    "slug": "devops-engineer-at-cloud-company",
+    "url": "https://remoteok.com/remote-jobs/1234569",
+    "position": "DevOps Engineer",
+    "company": "Cloud Company",
+    "company_logo": "",
+    "location": "Remote",
+    "tags": ["kubernetes", "terraform", "aws", "ci-cd"],
+    "description": "<p>Looking for experienced DevOps Engineer. AWS and Kubernetes experience required. 4+ years experience needed.</p>",
+    "salary_min": null,
+    "salary_max": null,
+    "date": "2024-01-13T12:00:00Z"
+  }
+]

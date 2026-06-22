@@ -1,0 +1,22 @@
+--- USER MESSAGE (Step 1413) ---
+<USER_REQUEST>
+The full Phase D spec is already written out in full detail — it's the long message a few replies above this one, right after the Phase C verification checklist. Scroll up to the message that starts with **"Phase D — Full Implementation Spec"** — everything is there across all four workstreams with every file, every code block, and the complete done-when checklist.
+
+Start with `apps/api/core/elasticsearch.py` → `apps/api/core/es_index.py` → `apps/api/services/es_sync.py` in that order since each one imports from the previous. The `ensure_index()` call in the lifespan hook and the `index_job()` call at the bottom of `store.py` are the two integration points that wire everything together.
+
+Report back the four UI results when the dev server boots and we'll move from there.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-07T15:14:50+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\.env.example (LANGUAGE_UNSPECIFIED)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\.env.local (LANGUAGE_UNSPECIFIED)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\.npmrc (LANGUAGE_UNSPECIFIED)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\docker-compose.yml (LANGUAGE_YAML)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\pnpm-workspace.yaml (LANGUAGE_YAML)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\verif_seq.txt (LANGUAGE_PLAINTEXT)
+</ADDITIONAL_METADATA>
+

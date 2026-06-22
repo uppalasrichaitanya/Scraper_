@@ -1,0 +1,51 @@
+--- USER MESSAGE (Step 1274) ---
+<USER_REQUEST>
+Clean verification. Everything checks out — canonical task names, healthy startup logs, real data from both sources. The `EmailStr` housekeeping note is exactly right, restore it after `uv lock` and before auth goes live.
+
+Phase D spec is already in the previous message above — scroll up, it's fully written out across all four workstreams with every file specified. No need to wait on anything.
+
+**Start with the frontend verification right now** while Antigravity begins Phase D implementation in parallel. It's the fastest way to confirm the existing search page renders real data before adding more features on top of it.
+
+Run this sequence:
+
+```bash
+# Confirm API is serving real data to the frontend
+curl -s "http://localhost:8000/v1/jobs?limit=3" | python3 -m json.tool | grep -E '"title_normalized|company_name|source_platform'
+
+# Start the web service if not already running
+docker-compose up -d web
+
+# Watch for any SSR errors on startup
+docker-compose logs web --tail=20
+```
+
+Then open `http://localhost:3000/search` and check these four things in order:
+
+**1.** Do real job cards render — Turso, Railway, Vercel visible on screen?
+
+**2.** Does infinite scroll trigger a second API call — watch Network tab for `/v1/jobs?cursor=...`?
+
+**3.** Does the job detail ISR page work — navigate to `/jobs/{any-id}`, then `curl http://localhost:3000/jobs/{id}` and grep for `application/ld+json` in raw HTML?
+
+**4.** Does dark mode toggle work cleanly on all components?
+
+Report back those four results and the exact error if any of them fail. While that's running, Antigravity can start Phase D from the top of the spec — the Elasticsearch index setup and `es_sync.py` are the critical path items since everything else in Phase D depends on the index existing.
+
+
+
+do the and show me also
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-07T15:02:10+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\.env.example (LANGUAGE_UNSPECIFIED)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\.env.local (LANGUAGE_UNSPECIFIED)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\.npmrc (LANGUAGE_UNSPECIFIED)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\docker-compose.yml (LANGUAGE_YAML)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\pnpm-workspace.yaml (LANGUAGE_YAML)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\verif_seq.txt (LANGUAGE_PLAINTEXT)
+</ADDITIONAL_METADATA>
+

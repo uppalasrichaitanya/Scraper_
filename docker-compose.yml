@@ -1,0 +1,165 @@
+version: "3.9"
+
+services:
+  # ─── Data Stores ───────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: jobsdb
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobs -d jobsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      ELASTIC_PASSWORD: ""
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qv '\"status\":\"red\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  # ─── Crawler Workers ────────────────────────────────────────────────────────
+
+  celery_worker:
+    build:
+      context: ./apps/crawler
+      dockerfile: ../../infra/docker/crawler.Dockerfile
+    command: celery -A crawler.celery_app worker --loglevel=info -c 4 -Q crawl_default,crawl_playwright
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://jobs:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/jobsdb
+      - REDIS_URL=redis://redis:6379/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - PYTHONPATH=/app
+    volumes:
+      - ./apps/crawler:/app
+      - ./apps:/app/apps
+      - /app/.venv
+    restart: unless-stopped
+
+  celery_beat:
+    build:
+      context: ./apps/crawler
+      dockerfile: ../../infra/docker/crawler.Dockerfile
+    command: celery -A crawler.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://jobs:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/jobsdb
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./apps/crawler:/app
+      - ./apps:/app/apps
+      - /app/.venv
+    restart: unless-stopped
+
+  flower:
+    image: mher/flower:2.0
+    command: celery flower --broker=redis://redis:6379/0 --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    restart: unless-stopped
+
+  # ─── Application Services ───────────────────────────────────────────────────
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://jobs:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/jobsdb
+      - REDIS_URL=redis://redis:6379/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    volumes:
+      - ./apps/api:/app
+      - /app/.venv
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    env_file:
+      - .env.local
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8000
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/.next
+    command: pnpm --filter web dev
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  esdata:

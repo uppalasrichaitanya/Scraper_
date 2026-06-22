@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>We Work Remotely: Remote Jobs</title>
+    <link>https://weworkremotely.com</link>
+    <description>Remote Jobs at We Work Remotely</description>
+    <atom:link href="https://weworkremotely.com/remote-jobs.rss" rel="self" type="application/rss+xml"/>
+    <item>
+      <title><![CDATA[Full-Stack Engineer at Basecamp]]></title>
+      <link>https://weworkremotely.com/remote-jobs/1</link>
+      <pubDate>Mon, 15 Jan 2024 10:00:00 +0000</pubDate>
+      <description><![CDATA[<p>Basecamp is looking for a Full-Stack Engineer. You will work with Ruby on Rails and React. 4+ years of experience required. Fully remote position.</p>]]></description>
+      <guid>https://weworkremotely.com/remote-jobs/1</guid>
+    </item>
+    <item>
+      <title><![CDATA[Senior Backend Developer at Shopify]]></title>
+      <link>https://weworkremotely.com/remote-jobs/2</link>
+      <pubDate>Sun, 14 Jan 2024 08:00:00 +0000</pubDate>
+      <description><![CDATA[<p>Shopify needs a Senior Backend Developer with strong Go or Ruby experience. You will build scalable e-commerce infrastructure. Remote worldwide.</p>]]></description>
+      <guid>https://weworkremotely.com/remote-jobs/2</guid>
+    </item>
+    <item>
+      <title><![CDATA[iOS Engineer at Buffer]]></title>
+      <link>https://weworkremotely.com/remote-jobs/3</link>
+      <pubDate>Sat, 13 Jan 2024 12:00:00 +0000</pubDate>
+      <description><![CDATA[<p>Buffer is hiring an iOS Engineer. Swift experience is required, with 3+ years mobile development background. Async-first remote team.</p>]]></description>
+      <guid>https://weworkremotely.com/remote-jobs/3</guid>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# uv
+uv.lock.bak
+
+# pytest / coverage
+.pytest_cache/
+htmlcov/
+.coverage
+*.cover
+coverage.xml
+
+# mypy
+.mypy_cache/
+
+# ruff
+.ruff_cache/
+
+# Playwright
+playwright-report/
+test-results/
+
+# spaCy models
+apps/crawler/crawler/models/
+
+# Fixtures (large HTML snapshots committed separately)
+# apps/crawler/tests/fixtures/  # keep — needed for CI
+
+# Docker volumes (if bind-mounted locally)
+postgres_data/
+redis_data/
+esdata/

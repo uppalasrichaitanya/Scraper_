@@ -1,0 +1,137 @@
+<USER_REQUEST>
+Both tracks complete across 29 files is genuinely good velocity. Before running verification, here's exactly what to execute and what to watch for at each step.
+
+---
+
+## Verification sequence — run in this exact order
+
+Don't run both tracks simultaneously yet. Verify the crawler pipeline first since the frontend depends on real job data being in the database.
+
+---
+
+## Step 1 — Start infrastructure only
+
+```bash
+docker-compose up -d postgres redis elasticsearch
+```
+
+Wait for all three to be healthy before anything else:
+
+```bash
+docker-compose ps
+# postgres: healthy
+# redis: healthy
+# elasticsearch: healthy
+
+# If elasticsearch is slow (it usually is), poll until ready:
+curl -s http://localhost:9200/_cluster/health | python3 -m json.tool | grep status
+# Wait until "status": "yellow" or "green" — never proceed on "red"
+```
+
+---
+
+## Step 2 — Run migrations and seeds
+
+```bash
+cd apps/api
+alembic upgrade head
+
+# Verify all tables created — should see 11+ tables
+python3 -c "
+from sqlalchemy import create_engine, inspect
+import os
+engine = create_engine(os.environ['DATABASE_URL'].replace('+asyncpg', ''))
+print(sorted(inspect(engine).get_table_names()))
+"
+
+# Run seeds
+python3 scripts/seed_skills.py
+python3 scripts/seed.py
+
+# Quick sanity check
+python3 -c "
+import asyncio
+from apps.api.core.database import get_db_context
+from sqlalchemy import text
+
+async def check():
+    async with get_db_context() as db:
+        r = await db.execute(text('SELECT count(*) FROM skills'))
+        print('Skills:', r.scalar())
+        r = await db.execute(text('SELECT count(*) FROM jobs'))
+        print('Jobs:', r.scalar())
+
+asyncio.run(check())
+"
+# Expected: Skills: 500+, Jobs: 100+
+```
+
+---
+
+## Step 3 — Run the crawler unit tests
+
+```bash
+cd apps/crawler
+pytest tests/ -v --tb=short 2>&1 | tee /tmp/crawler_test_output.txt
+
+# Expected output:
+# tests/test_adapters.py::test_remoteok_field_coverage PASSED
+# tests/test_adapters.py::test_salary
+<truncated 6802 bytes>
+v1/jobs?limit=1 | python3 -c 'import sys,json; print(json.load(sys.stdin)[\"jobs\"][0][\"id\"])')\",\"status\":\"saved\"}"
+```
+
+Then reload `/tracker` and try dragging the card to a different column.
+
+---
+
+## What to report back
+
+After running all steps, report these exact numbers:
+
+| Check | Expected |
+|---|---|
+| Total skills seeded | ≥ 500 |
+| Jobs after first crawl | ≥ 50 |
+| Jobs after second crawl | Same number ± 5 (dedup working) |
+| `job_versions` after second crawl | 0 or very low |
+| pytest pass rate | 3/3 |
+| `/v1/jobs` response time | < 200ms |
+| Search page Lighthouse score | ≥ 80 mobile |
+
+If any number is off, that's the signal for what to fix next. If all numbers look right, the platform is ready to add the Naukri Tier 2 adapter and the Elasticsearch search endpoint — which are the next two highest-value items.
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-07T01:15:16+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\apps\web\lib\api.ts (LANGUAGE_TYPESCRIPT)
+Cursor is on line: 49
+Other open documents:
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\apps\web\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\apps\web\components\QueryProvider.tsx (LANGUAGE_TSX)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\apps\web\lib\types.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\apps\web\components\ui\skeleton.tsx (LANGUAGE_TSX)
+- c:\Users\srich\OneDrive\Desktop\Scraper_Engine\jobsplatform\apps\web\components\ui\card.tsx (LANGUAGE_TSX)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.1 Pro (High) to Claude Sonnet 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+
+
+Created At: 2026-06-06T20:05:28Z
+Completed At: 2026-06-06T20:05:37Z
+
+				The command failed with exit code: 1
+				Output:
+				Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json; [print(json.loads(l).get('content') or json.loads(l).get('text')) for l in open(r'C:\Users\srich\.gemini\antigravity-ide\brain\ce8ca0e4-2323-43e3-8e2c-0ab45600bbd9\.system_generated\logs\transcript.jsonl', encoding='utf-8') if 'Verification sequence' in l]
+                  ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\srich\anaconda3\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2265' in position 2505: character maps to <undefined>
+
+
