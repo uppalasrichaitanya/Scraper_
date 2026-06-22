@@ -35,9 +35,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await check_redis_connection()
 
     # Ensure Elasticsearch index exists
-    from core.es_index import ensure_index
-    await ensure_index()
-    logger.info("Elasticsearch index 'jobs_v1' ensured")
+    from core.elasticsearch import get_es
+    from search.setup import create_index_if_missing
+    es = get_es()
+    await create_index_if_missing(es, index_name="jobs")
+    logger.info("Elasticsearch index 'jobs' ensured")
 
     logger.info("All connections healthy — API ready")
 

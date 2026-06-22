@@ -77,20 +77,9 @@ async def _upsert(job: NormalizedJobSchema) -> None:
 
         await db.commit()
 
-        # Fetch fully loaded job for indexing
-        from sqlalchemy.orm import selectinload, joinedload
-        from apps.api.models import JobSkill
         job_id = existing.id if existing else new_job.id
-        stmt = select(Job).options(
-            selectinload(Job.skills).joinedload(JobSkill.skill),
-            joinedload(Job.company),
-            joinedload(Job.location)
-        ).where(Job.id == job_id)
-        result = await db.execute(stmt)
-        loaded_job = result.scalar_one()
-        
-        from apps.api.services.es_sync import index_job
-        await index_job(loaded_job)
+        from .search_tasks import index_single_job
+        index_single_job.delay(str(job_id))
 
 
 # ── DB helpers ────────────────────────────────────────────────────────────────

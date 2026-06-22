@@ -19,6 +19,8 @@ app = Celery(
         "crawler.tasks.cleanup",
         "crawler.tasks.health_check",
         "crawler.tasks.reindex",
+        "crawler.tasks.crawl_tasks",
+        "crawler.tasks.search_tasks",
     ],
 )
 
@@ -40,6 +42,8 @@ app.conf.update(
         "jobs.cleanup_stale": {"queue": "crawl_default"},
         "crawl.health_check": {"queue": "crawl_default"},
         "jobs.reindex_elasticsearch": {"queue": "crawl_default"},
+        "crawl.run_adapter": {"queue": "crawl_playwright"},
+        "search.index_single_job": {"queue": "crawl_default"},
     },
     # Worker settings
     worker_prefetch_multiplier=1,       # prevent task hoarding in workers
@@ -77,5 +81,11 @@ app.conf.beat_schedule = {
         "task": "jobs.reindex_elasticsearch",
         "schedule": crontab(minute=0, hour=2),  # 2 AM
         "args": [],
+    },
+    # Crawl Naukri every 4 hours
+    "naukri-crawl": {
+        "task": "crawl.run_adapter",
+        "schedule": crontab(hour="*/4"),
+        "args": ["naukri"],
     },
 }

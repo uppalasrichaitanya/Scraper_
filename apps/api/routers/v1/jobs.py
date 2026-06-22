@@ -23,6 +23,8 @@ from models.job import Job, JobVersion
 from models.company import Company, Location
 from models.skill import Skill, JobSkill
 from schemas.job import JobResponse, PaginatedJobsResponse
+from elasticsearch import AsyncElasticsearch
+from core.elasticsearch import get_es
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -43,98 +45,64 @@ def _job_base_query():
     )
 
 
-# ── GET /jobs ─────────────────────────────────────────────────────────────────
 @router.get(
     "",
-    response_model=PaginatedJobsResponse,
-    summary="List jobs with cursor-based pagination",
+    summary="List jobs using Elasticsearch",
 )
-async def list_jobs(
-    db: DbSession,
-    # Cursor pagination — cursor is the ISO timestamp of the last seen job's created_at
-    cursor: Optional[str] = Query(
-        None,
-        description="Opaque cursor from previous response. Pass to fetch next page.",
-    ),
-    size: int = Query(20, ge=1, le=50, description="Items per page (max 50)"),
-    # Filters
-    source: Optional[str] = Query(None, description="Filter by source (e.g. remoteok, wwr)"),
-    is_remote: Optional[bool] = Query(None, description="Filter remote-only jobs"),
-    location: Optional[str] = Query(None, description="Filter by location name (case-insensitive)"),
-    skill: Optional[str] = Query(None, description="Filter by skill name (case-insensitive)"),
-    salary_min: Optional[int] = Query(None, description="Minimum salary filter (INR)"),
-) -> PaginatedJobsResponse:
-    stmt = _job_base_query()
+async def search_jobs(
+    q: str | None = None,
+    location: str | None = None,
+    is_remote: bool | None = None,
+    job_type: str | None = None,
+    skills: list[str] = Query(default=[]),
+    salary_min: int | None = None,
+    page: int = 1,
+    page_size: int = 20,
+    es: AsyncElasticsearch = Depends(get_es),
+):
+    must_clauses = []
+    filter_clauses = [{"term": {"status": "active"}}]
 
-    # ── Cursor decode ─────────────────────────────────────────────────────────
-    # cursor encodes: "{created_at_iso}:{job_id}" so we avoid the tie-break
-    # problem with identical timestamps
-    if cursor:
-        try:
-            ts_part, id_part = cursor.rsplit(":", 1)
-            from datetime import datetime
-            cursor_ts = datetime.fromisoformat(ts_part)
-            cursor_id = uuid.UUID(id_part)
-            # Keyset: rows created strictly before the cursor, or at same
-            # timestamp but with a lexicographically smaller UUID
-            from sqlalchemy import or_, and_
-            stmt = stmt.where(
-                or_(
-                    Job.created_at < cursor_ts,
-                    and_(Job.created_at == cursor_ts, Job.id < cursor_id),
-                )
-            )
-        except (ValueError, AttributeError):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid cursor format.",
-            )
+    if q:
+        must_clauses.append({
+            "multi_match": {
+                "query": q,
+                "fields": ["title^3", "company_name^2", "description_text", "skills^2"],
+                "type": "best_fields",
+                "fuzziness": "AUTO"
+            }
+        })
 
-    # ── Filters ───────────────────────────────────────────────────────────────
-    if source:
-        stmt = stmt.where(Job.source == source)
-    if is_remote is not None:
-        stmt = stmt.where(Job.is_remote == is_remote)
-    if salary_min is not None:
-        stmt = stmt.where(Job.salary_min >= salary_min)
     if location:
-        stmt = stmt.join(Job.location).where(
-            Location.name.ilike(f"%{location}%")
-        )
-    if skill:
-        stmt = stmt.join(Job.skills).join(JobSkill.skill).where(
-            Skill.name.ilike(f"%{skill}%")
-        )
+        filter_clauses.append({"term": {"location_city": location}})
+    if is_remote is not None:
+        filter_clauses.append({"term": {"is_remote": is_remote}})
+    if job_type:
+        filter_clauses.append({"term": {"job_type": job_type}})
+    if skills:
+        filter_clauses.append({"terms": {"skills": skills}})
+    if salary_min:
+        filter_clauses.append({"range": {"salary_min": {"gte": salary_min}}})
 
-    # Fetch size+1 to detect if there's a next page
-    stmt = stmt.order_by(Job.created_at.desc(), Job.id.desc()).limit(size + 1)
+    body = {
+        "query": {"bool": {"must": must_clauses or [{"match_all": {}}], "filter": filter_clauses}},
+        "sort": [{"_score": "desc"}, {"posted_at": "desc"}],
+        "from": (page - 1) * page_size,
+        "size": page_size,
+        "track_total_hits": True,
+    }
 
-    result = await db.execute(stmt)
-    jobs: list[Job] = list(result.scalars().unique())
+    result = await es.search(index="jobs", body=body)
+    hits = result["hits"]["hits"]
+    total = result["hits"]["total"]["value"]
 
-    has_next = len(jobs) > size
-    if has_next:
-        jobs = jobs[:size]
-
-    # ── Build next_cursor ─────────────────────────────────────────────────────
-    next_cursor: Optional[str] = None
-    if has_next and jobs:
-        last = jobs[-1]
-        next_cursor = f"{last.created_at.isoformat()}:{last.id}"
-
-    # ── Total count (for display only — cursor pagination doesn't need exact count) ──
-    count_stmt = select(func.count()).select_from(Job).where(Job.status == "active")
-    total_result = await db.execute(count_stmt)
-    total = total_result.scalar_one()
-
-    return PaginatedJobsResponse(
-        items=[JobResponse.model_validate(j) for j in jobs],
-        total=total,
-        page=0,  # cursor-based has no page number
-        size=size,
-        has_next=has_next,
-        next_cursor=next_cursor,
-    )
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "items": [h["_source"] for h in hits],
+        "has_next": total > (page * page_size)
+    }
 
 
 # ── GET /jobs/{id} ────────────────────────────────────────────────────────────
