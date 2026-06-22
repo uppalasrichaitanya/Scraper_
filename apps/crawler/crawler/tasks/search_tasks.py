@@ -33,3 +33,10 @@ def index_single_job(self, job_id: str):
             await es.index(index="jobs", id=job_id, document=doc)
 
     asyncio.run(_index())
+
+    # Also generate embedding for hybrid vector search
+    try:
+        from crawler.tasks.embedding_tasks import generate_job_embedding
+        generate_job_embedding.delay(job_id)
+    except Exception:
+        pass  # Embedding generation is best-effort

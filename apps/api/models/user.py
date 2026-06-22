@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, String, ForeignKey, DateTime
+from sqlalchemy import Boolean, String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 
 from .base import Base, utcnow
 
@@ -37,6 +38,18 @@ class UserProfile(Base):
     first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     avatar_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+
+    # ── Phase F: Resume fields ────────────────────────────────────────────────
+    current_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    years_experience: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    skills: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True)
+    education: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    experience: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    resume_s3_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    parsed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    parse_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, server_default="1")
+    # embedding stored as vector(384) — managed via raw SQL in migration, not mapped here
+    # Access via: SELECT embedding FROM user_profiles WHERE user_id = :id
 
     user: Mapped["User"] = relationship(back_populates="profile")
 

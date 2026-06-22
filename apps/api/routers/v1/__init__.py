@@ -25,6 +25,12 @@ from routers.v1.alerts import router as alerts_router
 router.include_router(saved_jobs_router)
 router.include_router(alerts_router)
 
+# ── Phase F ───────────────────────────────────────────────────────────────────
+from routers.v1.resume import router as resume_router
+from routers.v1.salary import router as salary_router
+router.include_router(resume_router)
+router.include_router(salary_router)
+
 # from routers.v1.users import router as users_router
 # from routers.v1.applications import router as apps_router
 # from routers.v1.skills import router as skills_router

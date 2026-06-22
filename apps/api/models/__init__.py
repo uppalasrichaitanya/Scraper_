@@ -5,6 +5,7 @@ from .job import Job, JobVersion
 from .skill import Skill, JobSkill
 from .crawler import CrawlRun, CrawlError
 from .saved import SavedJob, JobAlert
+from .embedding import JobEmbedding
 
 __all__ = [
     "Base",
@@ -21,4 +22,5 @@ __all__ = [
     "CrawlError",
     "SavedJob",
     "JobAlert",
+    "JobEmbedding",
 ]

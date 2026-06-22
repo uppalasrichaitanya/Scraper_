@@ -24,6 +24,8 @@ app = Celery(
         "crawler.tasks.alert_tasks",
         "crawler.tasks.health_tasks",
         "crawler.tasks.lifecycle_tasks",
+        "crawler.tasks.embedding_tasks",
+        "crawler.tasks.resume_tasks",
     ],
 )
 
