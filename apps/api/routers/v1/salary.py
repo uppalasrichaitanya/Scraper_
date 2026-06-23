@@ -12,9 +12,37 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from schemas.salary import SalaryStatsResponse
-from services.salary_service import get_salary_stats
+from services.salary_service import (
+    get_salary_stats,
+    get_top_role_city_combinations,
+    get_cities_for_role,
+)
 
 router = APIRouter(prefix="/v1/salaries", tags=["salaries"])
+
+
+@router.get(
+    "/top-combinations",
+    summary="Get top role and city combinations with median salary",
+)
+async def top_combinations(
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+):
+    combinations = await get_top_role_city_combinations(db, limit=limit)
+    return {"combinations": combinations}
+
+
+@router.get(
+    "/{role}/cities",
+    summary="Get cities for a role with median salary",
+)
+async def role_cities(
+    role: str,
+    db: AsyncSession = Depends(get_db),
+):
+    cities = await get_cities_for_role(db, role_slug=role)
+    return {"role": role, "cities": cities}
 
 
 @router.get(

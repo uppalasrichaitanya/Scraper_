@@ -79,7 +79,8 @@ async def get_top_role_city_combinations(
         SELECT
             LOWER(REGEXP_REPLACE(j.title, '[^a-zA-Z0-9 ]', '', 'g')) as role_slug,
             LOWER(l.city) as city_slug,
-            COUNT(*) as count
+            COUNT(*) as count,
+            PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY j.salary_min) as median
         FROM jobs j
         LEFT JOIN locations l ON j.location_id = l.id
         WHERE j.status = 'active'
@@ -95,8 +96,47 @@ async def get_top_role_city_combinations(
 
     return [
         {
-            "role": row["role_slug"].replace(" ", "-") if row["role_slug"] else "",
-            "city": row["city_slug"].replace(" ", "-") if row["city_slug"] else "",
+            "role_slug": row["role_slug"].replace(" ", "-") if row["role_slug"] else "",
+            "city_slug": row["city_slug"].replace(" ", "-") if row["city_slug"] else "",
+            "count": row["count"],
+            "median": int(row["median"]) if row["median"] else None,
         }
         for row in rows
     ]
+
+
+async def get_cities_for_role(
+    db: AsyncSession,
+    role_slug: str,
+) -> list[dict[str, Any]]:
+    """Get cities that have salary data for a given role, sorted by listing volume."""
+    role_pattern = "%" + "%".join(role_slug.split("-")) + "%"
+    
+    query = text("""
+        SELECT
+            LOWER(l.city) as city_slug,
+            COUNT(*) as count,
+            PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY j.salary_min) as median
+        FROM jobs j
+        LEFT JOIN locations l ON j.location_id = l.id
+        WHERE j.status = 'active'
+            AND j.salary_min IS NOT NULL
+            AND l.city IS NOT NULL
+            AND LOWER(j.title) LIKE :role_pattern
+        GROUP BY 1
+        HAVING COUNT(*) >= 30
+        ORDER BY 2 DESC
+    """)
+
+    result = await db.execute(query, {"role_pattern": role_pattern})
+    rows = result.mappings().all()
+
+    return [
+        {
+            "city_slug": row["city_slug"].replace(" ", "-") if row["city_slug"] else "",
+            "count": row["count"],
+            "median": int(row["median"]) if row["median"] else None,
+        }
+        for row in rows
+    ]
+

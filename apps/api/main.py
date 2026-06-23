@@ -52,6 +52,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 def create_app() -> FastAPI:
+    if settings.SENTRY_DSN:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            traces_sample_rate=0.1,
+            profiles_sample_rate=0.1,
+        )
+
     app = FastAPI(
         title="Career Intelligence Platform API",
         description="Job aggregation, search, and career intelligence platform",

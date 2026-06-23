@@ -107,4 +107,10 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour="*/4"),
         "args": ["naukri"],
     },
+    # Crawl LinkedIn every 6 hours
+    "linkedin-crawl": {
+        "task": "crawl.run_adapter",
+        "schedule": crontab(minute=15, hour="*/6"),
+        "args": ["linkedin"],
+    },
 }

@@ -43,6 +43,9 @@ export interface Job {
   updated_at: string;
   // Aliases used by components
   title_normalized?: string;
+  /** AI match score 0–1, injected by backend when user has a resume embedding */
+  match_score?: number | null;
+  skills?: string[];
 }
 
 /** Shape returned by GET /v1/jobs (PaginatedJobsResponse on backend) */
@@ -109,3 +112,62 @@ export interface CreateApplicationBody {
   status?: Application["status"];
   notes?: string;
 }
+
+// ── Resume & Profile ────────────────────────────────────────────────
+
+export interface ResumeUploadResponse {
+  status: string;
+  message: string;
+  resume_key: string;
+}
+
+export interface ParseStatusResponse {
+  is_parsed: boolean;
+  parsed_at?: string | null;
+  skills_count: number;
+  current_title?: string | null;
+}
+
+export interface ProfileResponse {
+  current_title?: string | null;
+  years_experience?: number | null;
+  skills: string[];
+  education: Record<string, unknown>[];
+  experience: Record<string, unknown>[];
+  resume_s3_key?: string | null;
+  parsed_at?: string | null;
+  has_embedding: boolean;
+}
+
+// ── Saved Jobs (Phase E backend) ────────────────────────────────────
+
+export type SavedJobStatus = "saved" | "applied" | "interviewing" | "offered" | "rejected";
+
+export interface SavedJobItem {
+  id: string;
+  job_id: string;
+  status: SavedJobStatus;
+  note?: string | null;
+  saved_at: string;
+  updated_at: string;
+  job?: {
+    id: string;
+    title: string;
+    company_name?: string | null;
+    location_city?: string | null;
+    is_remote: boolean;
+    salary_min?: number | null;
+    salary_max?: number | null;
+    salary_currency?: string | null;
+    job_type?: string | null;
+    apply_url?: string | null;
+    status: string;
+    posted_at?: string | null;
+  } | null;
+}
+
+export interface SavedJobsListResponse {
+  total: number;
+  items: SavedJobItem[];
+}
+

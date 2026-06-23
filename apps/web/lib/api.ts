@@ -8,6 +8,11 @@ import type {
   LoginBody,
   Application,
   CreateApplicationBody,
+  ResumeUploadResponse,
+  ParseStatusResponse,
+  ProfileResponse,
+  SavedJobsListResponse,
+  SavedJobStatus,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -32,6 +37,23 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Unknown error" }));
     throw new ApiError(res.status, err.detail ?? "Request failed");
+  }
+
+  return res.json() as Promise<T>;
+}
+
+/** Upload helper — sends FormData (no JSON content-type override). */
+async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    // Don't set Content-Type — the browser will set multipart/form-data with boundary
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Upload failed" }));
+    throw new ApiError(res.status, err.detail ?? "Upload failed");
   }
 
   return res.json() as Promise<T>;
@@ -79,5 +101,37 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify(body),
       }),
+  },
+
+  // ── Saved Jobs (Phase E backend) ────────────────────────────────
+  savedJobs: {
+    list: (status?: SavedJobStatus) => {
+      const query = status ? `?status=${status}` : "";
+      return apiFetch<SavedJobsListResponse>(`/v1/saved-jobs${query}`);
+    },
+    save: (jobId: string) =>
+      apiFetch<{ saved: boolean; job_id: string }>(`/v1/saved-jobs/${jobId}`, {
+        method: "POST",
+      }),
+    unsave: (jobId: string) =>
+      apiFetch<{ saved: boolean; job_id: string }>(`/v1/saved-jobs/${jobId}`, {
+        method: "DELETE",
+      }),
+    updateStatus: (jobId: string, body: { status: SavedJobStatus; note?: string }) =>
+      apiFetch<{ updated: boolean; job_id: string; status: string }>(
+        `/v1/saved-jobs/${jobId}/status`,
+        { method: "PATCH", body: JSON.stringify(body) },
+      ),
+  },
+
+  // ── Resume & Profile ────────────────────────────────────────────
+  resume: {
+    upload: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiUpload<ResumeUploadResponse>("/v1/users/resume", formData);
+    },
+    status: () => apiFetch<ParseStatusResponse>("/v1/users/resume/status"),
+    profile: () => apiFetch<ProfileResponse>("/v1/users/profile"),
   },
 };

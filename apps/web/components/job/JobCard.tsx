@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, IndianRupee, Wifi } from "lucide-react";
 import { formatSalary, timeAgo } from "@/lib/utils";
+import { MatchScoreBadge } from "@/components/job/MatchScoreBadge";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -30,15 +31,26 @@ export default function JobCard({ job }: JobCardProps) {
                 {companyName}
               </p>
             </div>
-            {job.is_remote && (
-              <Badge
-                variant="secondary"
-                className="flex-shrink-0 gap-1"
-              >
-                <Wifi className="w-3 h-3" />
-                Remote
-              </Badge>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="h-5 w-16">
+                {job.match_score !== undefined ? (
+                  job.match_score != null && job.match_score > 0 ? (
+                    <MatchScoreBadge score={job.match_score} />
+                  ) : null
+                ) : (
+                  <div className="h-full w-full animate-pulse rounded-full bg-gray-100 dark:bg-gray-800" />
+                )}
+              </div>
+              {job.is_remote && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1"
+                >
+                  <Wifi className="w-3 h-3" />
+                  Remote
+                </Badge>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">

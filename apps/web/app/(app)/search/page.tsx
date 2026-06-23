@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import JobCard, { JobCardSkeleton } from "@/components/job/JobCard";
-import FilterPanel from "@/components/search/FilterPanel";
+import { FilterPanel } from "@/components/search/FilterPanel";
 import SearchBar from "@/components/search/SearchBar";
 import type { JobListParams } from "@/lib/types";
 
-export default function SearchPage() {
+function SearchContent() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -40,11 +40,11 @@ export default function SearchPage() {
       if (!node || !data?.next_cursor) return;
       observer.current?.disconnect();
       observer.current = new IntersectionObserver(([entry]) => {
-        if (entry.isIntersecting && data.next_cursor) {
-          const next = new URLSearchParams(params.toString());
-          next.set("cursor", data.next_cursor);
-          router.push(`/search?${next.toString()}`, { scroll: false });
-        }
+        if (!entry || !entry.isIntersecting || !data.next_cursor) return;
+        
+        const next = new URLSearchParams(params.toString());
+        next.set("cursor", data.next_cursor);
+        router.push(`/search?${next.toString()}`, { scroll: false });
       });
       observer.current.observe(node);
     },
@@ -85,5 +85,19 @@ export default function SearchPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12 text-sm text-gray-500">
+          Loading search…
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
   );
 }
